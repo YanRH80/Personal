@@ -1,0 +1,11 @@
+name: Time tracker (issue commands + daily report)
+
+on: issue_comment: types: [created, edited] schedule: - cron: '59 23 * * *' # diario a 23:59 UTC (ajusta si necesitas otra TZ)
+
+permissions: contents: write issues: write
+
+jobs: handle-comment: if: github.event_name == 'issue_comment' runs-on: ubuntu-latest steps: - uses: actions/checkout@v4 - name: Set up Python uses: actions/setup-python@v4 with: python-version: '3.11' - name: Install deps run: pip install python-dateutil pytz - name: Handle issue comment env: GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} GITHUB_EVENT_PATH: ${{ github.event_path }} REPO: ${{ github.repository }} TIME_TRACKER_PATH: .github/time-tracker TZ: Europe/Madrid run: | python .github/time-tracker/handle_comment.py
+
+daily-report: if: github.event_name == 'schedule' runs-on: ubuntu-latest steps: - uses: actions/checkout@v4 - name: Set up Python uses: actions/setup-python@v4 with: python-version: '3.11' - name: Install deps run: pip install python-dateutil pytz - name: Generate daily report env: GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} REPO: ${{ github.repository }} TIME_TRACKER_PATH: .github/time-tracker TZ: Europe/Madrid run: | python .github/time-tracker/generate_daily_report.py - name: Upload report artifact uses: actions/upload-artifact@v4 with: name: daily-report path: reports/daily-*.md
+
+
